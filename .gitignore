@@ -2,3 +2,5 @@ venv/
 .env
 rmbg_model/
 onnx/
+.venv 
+.cache/huggingface

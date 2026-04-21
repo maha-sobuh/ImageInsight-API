@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter , Depends
 from app.schemas.image_schema import ImageRequest
 from app.services.image_analyzer import analyze_image
 from app.services.storage_service import get_image , get_image_url
 from fastapi.responses import Response
+from app.db.models import User
 
 
 router = APIRouter()

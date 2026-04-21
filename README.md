@@ -1,238 +1,455 @@
----
-license: other
-license_name: bria-rmbg-2.0
-license_link: https://creativecommons.org/licenses/by-nc/4.0/deed.en
-pipeline_tag: image-segmentation
-tags:
-- remove background
-- background
-- background-removal
-- Pytorch
-- vision
-- legal liability
-- transformers
-- transformers.js
-extra_gated_description: >-
-  Bria AI Model weights are open source for non commercial use only, per the
-  provided [license](https://creativecommons.org/licenses/by-nc/4.0/deed.en).
-extra_gated_heading: Fill in this form to immediatly access the model for non commercial use
-extra_gated_fields:
-  Name: text
-  Email: text
-  Company/Org name: text
-  Company Website URL: text
-  Discord user: text
-  I agree to BRIA’s Privacy policy, Terms & conditions, and acknowledge Non commercial use to be Personal use / Academy / Non profit (direct or indirect): checkbox
+# ImageInsight API
+
+A FastAPI-based REST API for intelligent image analysis and background removal. Upload images to get detailed metadata, AI-generated descriptions powered by Meta Llama 3.2 Vision, and background removal using the BriaRMBG deep learning model. All processed images are stored securely in AWS S3.
+
 ---
 
-# BRIA Background Removal v2.0 Model Card
-<p align="center"><img src="https://platform.bria.ai/assets/Bria-logo-BdHFpNGW.svg" alt="BRIA Logo" width="200" /></p>
+## Table of Contents
 
-<!-- RMBG Card wrapper -->
-<div class="rmbg-card" style="position: relative; border-radius: 12px; overflow: hidden;">
+- [Project Overview](#project-overview)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Model Setup (RMBG-1.4)](#model-setup-rmbg-14)
+- [Environment Variables](#environment-variables)
+- [Database Setup](#database-setup)
+- [Running the Project](#running-the-project)
+- [API Endpoints](#api-endpoints)
+- [Project Structure](#project-structure)
 
-  <!-- FIBO Promo Banner (Top) -->
-  <a
-    href="https://huggingface.co/briaai/FIBO"
-    target="_blank"
-    rel="noopener"
-    aria-label="Explore FIBO on Hugging Face"
-    style="
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      background: linear-gradient(90deg, #fff6b7 0%, #fde047 100%);
-      color: #1f2937;
-      text-decoration: none;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      z-index: 10;
-    ">
-    <img
-      src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
-      alt="Hugging Face"
-      width="18"
-      height="18"
-      style="display:block"
-    />
-    <span>✨ Discover <strong>FIBO</strong> on Hugging Face</span>
-  </a>
+---
 
-  <!-- ... your RMBG content below ... -->
-<p align="center">
-         💜 <a href="https://go.bria.ai/46gzn20"><b>Bria AI</b></a>&nbsp&nbsp | &nbsp&nbsp🤗 <a href="https://huggingface.co/briaai/">Hugging Face</a> &nbsp&nbsp | &nbsp&nbsp 📑 <a href="https://blog.bria.ai/">Blog</a> &nbsp&nbsp 
-<br>
-🖥️ <a href="https://huggingface.co/spaces/briaai/BRIA-RMBG-2.0">Demo</a>&nbsp&nbsp| &nbsp&nbsp <a href="https://github.com/Bria-AI/RMBG-2.0">Github</a>&nbsp&nbsp
-</p>
+## Project Overview
 
-RMBG v2.0 is our new state-of-the-art background removal model significantly improves RMBG v1.4. The model is designed to effectively separate foreground from background in a range of
-categories and image types. This model has been trained on a carefully selected dataset, which includes:
-general stock images, e-commerce, gaming, and advertising content, making it suitable for commercial use cases powering enterprise content creation at scale. 
-The accuracy, efficiency, and versatility currently rival leading source-available models. 
-It is ideal where content safety, legally licensed datasets, and bias mitigation are paramount. 
+ImageInsight API provides three core capabilities:
 
-**[→ Try the API Sandbox (no signup required)](https://catalog.bria.ai/image-editing/remove-background/sandbox)**
+- **Image Analysis** — Extract metadata (dimensions, file type, size, pixel count, aspect ratio, alpha channel, RGB histograms) and generate a natural-language description of the image using an LLM.
+- **Background Removal** — Remove the background from any image using the BriaRMBG-1.4 ML model, returning a transparent PNG.
+- **Secure Storage** — All images are stored in an AWS S3 bucket and accessible via pre-signed URLs.
 
-Developed by BRIA AI, RMBG v2.0 is available as a source-available model for non-commercial use.
+Access to all image endpoints is protected by JWT authentication.
 
-### Get Access
+---
 
-Bria RMBG2.0 is availabe everywhere you build, either as source-code and weights, ComfyUI nodes or API endpoints.
+## Prerequisites
 
+Make sure the following are installed and available on your machine before proceeding:
 
--
+| Requirement | Version | Notes |
+|---|---|---|
+| Python | >= 3.13 | Check with `python --version` |
+| [UV](https://docs.astral.sh/uv/) | Latest | Fast Python package manager |
+| AWS Account | — | S3 bucket + IAM credentials required |
+| PostgreSQL / AWS RDS | >= 14 | PostgreSQL database instance |
+| Git | — | To clone the repository |
 
+### Install UV
 
-#####
-### Model Description
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-**For production / commercial deployment**, use the Bria API — same RMBG-2.0 quality, fully licensed, zero infrastructure:
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-| Use                   | Self-Hosted (HF Weights) | Bria API    |
-| :-------------------- |:-------------------------| :---------- |
-| Quality               | ✅ RMBG-2.0              | ✅ RMBG-2.0 |
-| Commercial License    | ❌ Requires agreement    | ✅ Included |
-| GPU Infrastructure    | ❌ You manage            | ✅ Managed  |
-| Legally Licensed Data | ✅ Yes                   | ✅ Yes      |
-| Setup Time            | Hours                    | Minutes     |
+---
 
-**[→ Try the API Sandbox](https://catalog.bria.ai/image-editing/remove-background/sandbox)** — test it live, no signup required.
+## Installation
 
+### 1. Clone the repository
 
+```bash
+git clone <repository-url>
+cd ImageInsight-API
+```
 
-## Model Details
-- **Developed by:** [BRIA AI](https://bria.ai/)
-- **Model type:** Background Removal 
-- **License:** [Creative Commons Attribution–Non-Commercial (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/deed.en)
-  - The model is released under a CC BY-NC 4.0 license for non-commercial use.
-  - Commercial use is subject to a commercial agreement with BRIA. Available [here](https://share-eu1.hsforms.com/2sj9FVZTGSFmFRibDLhr_ZAf4e04)
+### 2. Create a virtual environment and install dependencies
 
- **API Endpoint**: [Sandbox](https://catalog.bria.ai/image-editing/remove-background/sandbox)
-- **ComfyUI**: [Use it in workflows](https://github.com/Bria-AI/ComfyUI-BRIA-API)
-- **GitHub**: [github.com/Bria-AI/RMBG-2.0](https://github.com/Bria-AI/RMBG-2.0)
+UV handles both the virtual environment and dependency installation in one step:
 
- **Purchase:** To purchase a Self-Hosted (HF Weights) commercial license [Click Here](https://share-eu1.hsforms.com/2sj9FVZTGSFmFRibDLhr_ZAf4e04).
+```bash
+uv sync
+```
 
-For more information, please visit our [website](https://catalog.bria.ai/image-editing/remove-background/sandbox).
+This reads `pyproject.toml` and installs all required packages into a local `.venv` directory.
 
-Join our [Discord community](https://discord.gg/Nxe9YW9zHS) for more information, tutorials, tools, and to connect with other users!
+> **Note:** The initial install includes PyTorch and other large ML libraries. It may take several minutes depending on your internet connection.
 
-[CLICK HERE FOR A DEMO](https://huggingface.co/spaces/briaai/BRIA-RMBG-2.0)
+---
 
-[fal.ai](https://fal.ai/models/fal-ai/bria/background/remove), [Replicate](https://replicate.com/bria/remove-background)
+## Model Setup (RMBG-1.4)
 
-![examples](t4.png)
+The background removal feature uses the **BriaRMBG-1.4** model from HuggingFace. The model files must be downloaded manually and placed in a local directory, as they are excluded from version control.
 
-- **Model Description:** BRIA RMBG-2.0 is a dichotomous image segmentation model trained exclusively on a professional-grade dataset. The model output includes a single-channel 8-bit grayscale alpha matte, where each pixel value indicates the opacity level of the corresponding pixel in the original image. This non-binary output approach offers developers the flexibility to define custom thresholds for foreground-background separation, catering to varied use cases requirements and enhancing integration into complex pipelines.
-- **BRIA:** Resources for more information: [BRIA AI](https://bria.ai/)
+### Step 1 — Install the HuggingFace CLI (already included in dependencies)
 
+```bash
+uv run huggingface-cli login
+```
 
+You will be prompted for a HuggingFace token. Create a free account at [huggingface.co](https://huggingface.co) and generate a token from your account settings if you don't already have one.
 
-## Training data
-Bria-RMBG model was trained with over 15,000 high-quality, high-resolution, manually labeled (pixel-wise accuracy), fully licensed images.
-Our benchmark included balanced gender, balanced ethnicity, and people with different types of disabilities.
-For clarity, we provide our data distribution according to different categories, demonstrating our model’s versatility.
+### Step 2 — Download the model
 
-### Distribution of images:
+```bash
+uv run huggingface-cli download briaai/RMBG-1.4 --local-dir rmbg_model
+```
 
-| Category | Distribution |
-| -----------------------------------| -----------------------------------:|
-| Objects only | 45.11% |
-| People with objects/animals | 25.24% |
-| People only | 17.35% |
-| people/objects/animals with text | 8.52% |
-| Text only | 2.52% |
-| Animals only | 1.89% |
+This downloads all model files into the `rmbg_model/` directory at the root of the project.
 
-| Category | Distribution |
-| -----------------------------------| -----------------------------------------:|
-| Photorealistic | 87.70% |
-| Non-Photorealistic | 12.30% |
+### Step 3 — Verify the directory
 
-
-| Category | Distribution |
-| -----------------------------------| -----------------------------------:|
-| Non Solid Background | 52.05% |
-| Solid Background | 47.95% 
-
-
-| Category | Distribution |
-| -----------------------------------| -----------------------------------:|
-| Single main foreground object | 51.42% |
-| Multiple objects in the foreground | 48.58% |
-
-
-## Qualitative Evaluation
-Open source models comparison
-![diagram](diagram1.png)
-![examples](collage5.png)
-
-### Architecture
-RMBG-2.0 is developed on the [BiRefNet](https://github.com/ZhengPeng7/BiRefNet) architecture enhanced with our proprietary dataset and training scheme. This training data significantly improves the model’s accuracy and effectiveness for background-removal task.<br>
-If you use this model in your research, please cite:
+After downloading, your project root should contain:
 
 ```
-@article{BiRefNet,
-  title={Bilateral Reference for High-Resolution Dichotomous Image Segmentation},
-  author={Zheng, Peng and Gao, Dehong and Fan, Deng-Ping and Liu, Li and Laaksonen, Jorma and Ouyang, Wanli and Sebe, Nicu},
-  journal={CAAI Artificial Intelligence Research},
-  year={2024}
+rmbg_model/
+├── config.json
+├── model.safetensors
+├── preprocessor_config.json
+└── ...
+```
+
+The application reads the model path from the `RMBG_MODEL_PATH` environment variable (defaults to `rmbg_model`).
+
+> **Note:** The model is loaded lazily — it is only loaded into memory on the first background removal request.
+
+---
+
+## Environment Variables
+
+Create a `.env` file in the root of the project by copying the template below. **Never commit your `.env` file to version control.**
+
+```bash
+# .env
+
+# --- AWS S3 Storage ---
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_BUCKET_NAME=your_s3_bucket_name
+AWS_REGION=your_aws_region               # e.g. eu-north-1
+
+# --- LLM (OpenRouter) ---
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+# --- Database (PostgreSQL / AWS RDS) ---
+DB_HOST=your_db_host                     # e.g. mydb.xxxxxxxx.rds.amazonaws.com
+DB_PORT=5432
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+
+# --- JWT Authentication ---
+JWT_SECRET_KEY=your_secret_key           # generate with: openssl rand -hex 32
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=30
+
+# --- ML Model ---
+RMBG_MODEL_PATH=rmbg_model
+```
+
+### Variable Descriptions
+
+| Variable | Description |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | IAM user access key with S3 read/write permissions |
+| `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
+| `AWS_BUCKET_NAME` | Name of the S3 bucket where images will be stored |
+| `AWS_REGION` | AWS region where the S3 bucket is located |
+| `OPENROUTER_API_KEY` | API key from [openrouter.ai](https://openrouter.ai) — used to call Meta Llama 3.2 Vision for image descriptions |
+| `DB_HOST` | Hostname of your PostgreSQL database or RDS instance |
+| `DB_PORT` | Database port (PostgreSQL default is `5432`) |
+| `DB_NAME` | Name of the database to connect to |
+| `DB_USER` | Database username |
+| `DB_PASSWORD` | Database password |
+| `JWT_SECRET_KEY` | Secret key used to sign and verify JWT tokens — use a long random string |
+| `JWT_ALGORITHM` | JWT signing algorithm (keep as `HS256`) |
+| `JWT_EXPIRE_MINUTES` | How many minutes a login token remains valid |
+| `RMBG_MODEL_PATH` | Path to the directory containing the downloaded RMBG model files |
+
+### Generate a secure JWT secret key
+
+```bash
+openssl rand -hex 32
+```
+
+---
+
+## Database Setup
+
+The application uses **PostgreSQL** (via AWS RDS or any hosted PostgreSQL instance). The database schema is created automatically on startup — no manual migration steps are needed.
+
+### Required: Create the database
+
+Make sure a PostgreSQL database exists with the name you set in `DB_NAME`. You can create one using `psql`:
+
+```bash
+psql -h <DB_HOST> -U <DB_USER> -c "CREATE DATABASE <DB_NAME>;"
+```
+
+### Automatic table creation
+
+When the application starts, it automatically runs:
+
+```python
+await create_tables()
+```
+
+This creates all required tables (e.g., the `user` table) using SQLModel.
+
+### Seeding initial users (optional)
+
+A seed script is included to populate the database with test users:
+
+```bash
+uv run python -m app.db.seed
+```
+
+This creates two users:
+
+| Email | Password |
+|---|---|
+| `maha@gmail.com` | `12345678` |
+| `hasan@gmail.com` | `password123` |
+
+> These are for development/testing purposes only. Remove or replace them before deploying to production.
+
+### AWS RDS Setup (recommended for production)
+
+1. Create a **PostgreSQL** RDS instance in your AWS account.
+2. Set the instance to be publicly accessible (or configure a VPC/security group for access from your server).
+3. Use the RDS endpoint as `DB_HOST` in your `.env` file.
+4. Make sure port `5432` is open in the RDS security group.
+
+---
+
+## Running the Project
+
+### Start the development server
+
+```bash
+uv run uvicorn app.main:app --reload
+```
+
+The API will be available at `http://localhost:8000`.
+
+### Access the interactive API documentation
+
+| URL | Description |
+|---|---|
+| `http://localhost:8000/docs` | Swagger UI (interactive) |
+| `http://localhost:8000/redoc` | ReDoc documentation |
+
+### Start the server on a custom host/port
+
+```bash
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+
+All image endpoints are protected. You must first log in to receive a JWT token, then include it in subsequent requests.
+
+---
+
+#### `POST /auth/login`
+
+Authenticate with email and password to receive a Bearer token.
+
+**Request body (JSON):**
+
+```json
+{
+  "email": "maha@gmail.com",
+  "password": "12345678"
 }
 ```
 
-#### Requirements
+**Response (`200 OK`):**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+**Error responses:**
+
+| Status | Description |
+|---|---|
+| `401 Unauthorized` | Invalid email or password |
+
+**Include the token in all subsequent requests:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+### Image Analysis
+
+#### `POST /v1/image-info`
+
+Analyze an image and return metadata plus an AI-generated description. The image is stored in S3.
+
+**Request body (JSON):**
+
+Provide either a base64-encoded image string or a publicly accessible image URL. At least one is required.
+
+```json
+{
+  "base64": "<base64-encoded-image-string>"
+}
+```
+
+```json
+{
+  "url": "https://example.com/photo.jpg"
+}
+```
+
+**Response (`200 OK`):**
+
+```json
+{
+  "file_type": "JPEG",
+  "file_size": 204800,
+  "width": 1920,
+  "height": 1080,
+  "pixel_count": 2073600,
+  "aspect_ratio": "16:9",
+  "alpha_channel": false,
+  "histogram": {
+    "red": [0, 12, 34, ...],
+    "green": [0, 8, 22, ...],
+    "blue": [0, 5, 19, ...]
+  },
+  "description": "A vibrant outdoor landscape featuring rolling green hills under a clear blue sky. The image conveys a sense of openness and calm, with warm sunlight illuminating the scene. At 1920×1080, the 16:9 aspect ratio gives it a cinematic quality.",
+  "image_id": "images/f3a1b2c4-xxxx-xxxx-xxxx-d5e6f7a8b9c0.jpeg"
+}
+```
+
+---
+
+#### `GET /v1/images/{image_id}`
+
+Download a previously analyzed image as binary data.
+
+**Path parameter:** `image_id` — the value returned in `image_id` from the analysis response.
+
+**Response:** Binary `image/jpeg` content.
+
+---
+
+#### `GET /v1/images/url/{image_id}`
+
+Get a pre-signed S3 URL for a previously analyzed image (valid for 1 hour).
+
+**Path parameter:** `image_id` — the value returned in `image_id` from the analysis response.
+
+**Response (`200 OK`):**
+
+```json
+{
+  "url": "https://your-bucket.s3.amazonaws.com/images/f3a1b2c4-xxxx.jpeg?X-Amz-Signature=..."
+}
+```
+
+---
+
+### Background Removal
+
+#### `POST /v1/remove-background`
+
+Remove the background from an uploaded image. Returns a transparent PNG stored in S3.
+
+**Request:** `multipart/form-data` with a file field named `file`.
+
 ```bash
-torch
-torchvision
-pillow
-kornia
-transformers
+curl -X POST http://localhost:8000/v1/remove-background \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@photo.jpg"
 ```
 
-### Usage
+**Accepted file types:** `image/jpeg`, `image/png`, `image/webp`, `image/avif`
+**Maximum file size:** 10 MB
 
-<!-- This section is for the model use without fine-tuning or plugging into a larger ecosystem/app. -->
+**Response (`200 OK`):**
 
-
-```python
-from PIL import Image
-import torch
-from torchvision import transforms
-from transformers import AutoModelForImageSegmentation
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = AutoModelForImageSegmentation.from_pretrained('briaai/RMBG-2.0', trust_remote_code=True).eval().to(device)
-
-# Data settings
-image_size = (1024, 1024)
-transform_image = transforms.Compose([
-    transforms.Resize(image_size),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-
-image = Image.open(input_image_path)
-input_images = transform_image(image).unsqueeze(0).to(device)
-
-# Prediction
-with torch.no_grad():
-    preds = model(input_images)[-1].sigmoid().cpu()
-pred = preds[0].squeeze()
-pred_pil = transforms.ToPILImage()(pred)
-mask = pred_pil.resize(image.size)
-image.putalpha(mask)
-
-image.save("no_bg_image.png")
+```json
+{
+  "image_id": "removed-bg/a1b2c3d4-xxxx-xxxx-xxxx-e5f6a7b8c9d0.png",
+  "url": "https://your-bucket.s3.amazonaws.com/removed-bg/a1b2c3d4-xxxx.png?X-Amz-Signature=...",
+  "message": "Background removed successfully."
+}
 ```
 
+**Error responses:**
 
-</div>
+| Status | Description |
+|---|---|
+| `400 Bad Request` | Unsupported file type or empty file |
+| `413 Request Entity Too Large` | File exceeds 10 MB |
+
+---
+
+#### `GET /v1/remove-background/{image_id}`
+
+Download a background-removed image as a transparent PNG.
+
+**Path parameter:** `image_id` — the value returned in `image_id` from the remove-background response.
+
+**Response:** Binary `image/png` content with alpha (transparency) channel.
+
+---
+
+### Endpoint Summary
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/login` | None | Log in and get a JWT token |
+| `POST` | `/v1/image-info` | Required | Analyze image metadata + AI description |
+| `GET` | `/v1/images/{image_id}` | Required | Download analyzed image |
+| `GET` | `/v1/images/url/{image_id}` | Required | Get pre-signed URL for analyzed image |
+| `POST` | `/v1/remove-background` | Required | Remove background from uploaded image |
+| `GET` | `/v1/remove-background/{image_id}` | Required | Download background-removed image |
+
+---
+
+## Project Structure
+
+```
+ImageInsight API/
+├── main.py                         # Root entry point
+├── pyproject.toml                  # Project metadata and dependencies
+├── .env                            # Environment variables (not committed)
+├── .python-version                 # Python version pin
+├── rmbg_model/                     # BriaRMBG-1.4 model files (not committed)
+└── app/
+    ├── main.py                     # FastAPI app initialization, router registration, startup
+    ├── dependencies.py             # Shared FastAPI dependencies (image validator)
+    ├── routes/
+    │   ├── auth.py                 # POST /auth/login
+    │   ├── image_info.py           # GET/POST /v1/image-info, /v1/images/...
+    │   └── image_remove_background.py  # GET/POST /v1/remove-background/...
+    ├── services/
+    │   ├── auth_service.py         # JWT creation, password verification, user lookup
+    │   ├── background_remover.py   # BriaRMBG model inference (PyTorch)
+    │   ├── image_analyzer.py       # Metadata extraction + LLM description orchestration
+    │   ├── llm_service.py          # OpenRouter API client (Llama 3.2 Vision)
+    │   └── storage_service.py      # AWS S3 upload, download, and pre-signed URL generation
+    ├── schemas/
+    │   ├── auth_schema.py          # LoginRequest, TokenResponse
+    │   └── image_schema.py         # ImageRequest, InfoResponse, ColorHistogram
+    ├── db/
+    │   ├── database.py             # Async SQLModel engine, session factory, create_tables()
+    │   ├── models.py               # User ORM model
+    │   └── seed.py                 # Script to seed test users
+    └── middleware/
+        └── auth_middleware.py      # JWT validation middleware for /v1/* routes
+```
