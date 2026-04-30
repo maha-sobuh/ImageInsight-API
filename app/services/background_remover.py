@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision.transforms.functional import normalize
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from app.services.storage_service import save_removed_bg_image, get_removed_bg_image_url
 
 load_dotenv()
 
@@ -16,6 +16,7 @@ MODEL_INPUT_SIZE = [1024, 1024]
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = None
+
 
 def _load_model():
     global model
@@ -55,7 +56,7 @@ def _postprocess(result: torch.Tensor, orig_size: list) -> np.ndarray:
 def _remove_background_sync(image_bytes: bytes) -> bytes:
     global model
     if model is None:
-        _load_model()  # lazy load 
+        _load_model()
 
     pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     orig_size = [pil_image.size[1], pil_image.size[0]]
@@ -78,3 +79,14 @@ def _remove_background_sync(image_bytes: bytes) -> bytes:
 
 async def remove_background(image_bytes: bytes) -> bytes:
     return await asyncio.to_thread(_remove_background_sync, image_bytes)
+
+
+async def process_remove_background(image_bytes: bytes) -> dict:
+    result_bytes = await remove_background(image_bytes)
+    image_id = await save_removed_bg_image(result_bytes)
+    url = get_removed_bg_image_url(image_id)
+    return {
+        "image_id": image_id,
+        "url": url,
+        "message": "Background removed successfully."
+    }
