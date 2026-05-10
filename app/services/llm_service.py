@@ -45,3 +45,24 @@ async def generate_description(image_info: dict, image_bytes: bytes) -> str:
         ]
     )
     return response.choices[0].message.content
+
+#_________________________LLM expantion _______________
+
+PROMPT_EXPANSION_SYSTEM = """You are an expert at writing detailed prompts for AI image generation models.
+When given a short or vague prompt, expand it into a rich, detailed description.
+Rules:
+- Keep the original idea/subject
+- Add lighting, mood, style, quality tags
+- Maximum 50 words
+- Return ONLY the expanded prompt, no explanations, no quotes
+"""
+
+async def expand_image_prompt(prompt: str) -> str:
+    response = await client.chat.completions.create(
+        model="meta-llama/llama-3.2-11b-vision-instruct",
+        messages=[
+            {"role": "system", "content": PROMPT_EXPANSION_SYSTEM},
+            {"role": "user", "content": f"Expand this prompt: {prompt}"}
+        ]
+    )
+    return response.choices[0].message.content.strip()

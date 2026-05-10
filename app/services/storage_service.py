@@ -44,6 +44,7 @@ def get_image_url(image_id: str):
         Params={"Bucket": BUCKET_NAME, "Key": f"images/{image_id}"},
     )
     return url
+#_____________________________________________________________________________________________________
 
 async def save_removed_bg_image(image_bytes: bytes) -> str:
     filename = f"{str(uuid.uuid4())}.png"
@@ -68,5 +69,33 @@ async def get_removed_bg_image(image_id: str) -> bytes:
         response = await s3.get_object(
             Bucket=BUCKET_NAME, 
             Key=f"removed-bg/{image_id}"
+        )
+        return await response["Body"].read()
+    
+#    __________________________________________________________________________________
+
+async def save_generated_image(image_bytes: bytes) -> str:
+    filename = f"{str(uuid.uuid4())}.png"
+    async with SESSION.client("s3") as s3:
+        await s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"generated-images/{filename}",
+            Body=image_bytes,
+            ContentType="image/png"
+        )
+    return filename
+
+def get_generated_image_url(image_id: str) -> str:
+    url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": BUCKET_NAME, "Key": f"generated-images/{image_id}"},
+    )
+    return url
+
+async def get_generated_image(image_id: str) -> bytes:
+    async with SESSION.client("s3") as s3:
+        response = await s3.get_object(
+            Bucket=BUCKET_NAME,
+            Key=f"generated-images/{image_id}"
         )
         return await response["Body"].read()

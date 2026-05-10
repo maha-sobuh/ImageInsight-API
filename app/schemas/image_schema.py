@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl, model_validator
+from pydantic import BaseModel, HttpUrl, model_validator , Field
 from typing import Optional
 from PIL import Image
 from io import BytesIO
@@ -41,3 +41,10 @@ class InfoResponse(BaseModel):
     histogram : ColorHistogram
     description : str="" 
     image_id: str = ""
+
+
+class GenerateImageRequest(BaseModel):
+    prompt: str = Field(..., min_length=3, max_length=500)
+    width: int = Field(default=512, multiple_of=8, ge=256, le=1024)
+    height: int = Field(default=512, multiple_of=8, ge=256, le=1024)
+    steps: int = Field(default=4, ge=4, le=25)

@@ -30,7 +30,13 @@ def _load_model():
 
     from briarmbg import BriaRMBG  # type: ignore
 
-    m = BriaRMBG.from_pretrained(MODEL_PATH)
+    m = BriaRMBG()  # ← instantiate directly, no from_pretrained
+    state_dict = torch.load(
+        os.path.join(MODEL_PATH, "model.pth"),
+        map_location=device,
+        weights_only=True
+    )
+    m.load_state_dict(state_dict)
     m.to(device)
     m.eval()
     model = m
@@ -80,6 +86,7 @@ def _remove_background_sync(image_bytes: bytes) -> bytes:
 async def remove_background(image_bytes: bytes) -> bytes:
     return await asyncio.to_thread(_remove_background_sync, image_bytes)
 
+#_______________________________________________________________________________________
 
 async def process_remove_background(image_bytes: bytes) -> dict:
     result_bytes = await remove_background(image_bytes)
